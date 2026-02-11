@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Vanstra Capital</title>
+    <meta name="description" content="Vanstra Capital Admin Panel - Manage your administrative dashboard.">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="loading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 text-center">
+            <div class="inline-block">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+            </div>
+            <p class="text-gray-700 font-medium">Redirecting to Admin Panel...</p>
+        </div>
+    </div>
+
+    <script>
+        // Check if user has an admin session
+        function checkAdminSession() {
+            const adminSession = localStorage.getItem('adminSession');
+            
+            if (!adminSession) {
+                // No session found, redirect to admin login
+                window.location.href = 'admin-login.html';
+                return;
+            }
+            
+            try {
+                const session = JSON.parse(adminSession);
+                // Session exists, redirect to admin panel v2
+                window.location.href = 'admin-v2.html';
+            } catch (error) {
+                // Invalid session data, redirect to login
+                localStorage.removeItem('adminSession');
+                window.location.href = 'admin-login.html';
+            }
+        }
+        
+        // Perform session check on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(checkAdminSession, 500);
+        });
+        
+        // Also check immediately in case DOM is already loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', checkAdminSession);
+        } else {
+            setTimeout(checkAdminSession, 500);
+        }
+    </script>
+</body>
+</html>
