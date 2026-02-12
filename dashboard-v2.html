@@ -917,7 +917,7 @@
             border-top: 1px solid #E5E7EB;
         }
         
-        /* Live Chat: Use 3CX widget instead */
+        /* Live chat removed */
         
         .chat-input:focus {
             outline: none;
@@ -1414,11 +1414,7 @@
         </a>
     </nav>
 
-    <!-- 3CX Live Chat Widget -->
-    <call-us-selector
-      phonesystem-url="https://1575.3cx.cloud">
-    </call-us-selector>
-    <script defer src="https://downloads-global.3cx.com/downloads/livechatandtalk/v1/callus.js" id="tcx-callus-js" charset="utf-8"></script>
+        <!-- Live chat removed -->
 
     <!-- ==================== MODALS ==================== -->
 
@@ -1698,17 +1694,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div class="support-item" onclick="open3CXChat()">
-                    <div class="support-icon">
-                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                        </svg>
-                    </div>
-                    <div class="support-content">
-                        <div class="support-title">Live Chat</div>
-                        <div class="support-subtitle">Chat with us 24/7</div>
-                    </div>
-                </div>
+                <!-- Live Chat support removed -->
 
                 <div class="support-item" onclick="window.location.href='tel:1-800-VANSTRA'">
                     <div class="support-icon">
@@ -1917,17 +1903,7 @@
             loadAnnouncements();
             monitorAccountStatus();
             
-            // Chat: Use 3CX live chat widget instead
-            VanstraBank.on('admin_reply', function(msg) {
-                if (msg.userId === currentUser.id) {
-                    // addChatMessage(msg.message, 'admin'); - using 3CX widget now
-                }
-            });
-            VanstraBank.on('chat_message', function(msg) {
-                if (msg.userId === currentUser.id) {
-                    // addChatMessage(msg.message, msg.from === 'admin' ? 'admin' : 'user'); - using 3CX widget now
-                }
-            });
+            // Chat handlers removed (internal chat disabled)
         });
 
         function getTimeBasedGreeting() {
@@ -2792,7 +2768,7 @@
             openPinModal();
         }
 
-        // Support: Use 3CX live chat widget instead
+        // Support: live chat removed
 
         // Receipt
         function showReceipt(transactionId) {
@@ -2950,7 +2926,7 @@
                 .replace(/'/g, '&#039;');
         }
 
-        // Chat: Use 3CX live chat widget instead
+        // Chat: live chat removed
 
         // Support
         function openSupport() {

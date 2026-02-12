@@ -543,3 +543,5 @@ window.VanstraCapital = {
     showComingSoon,
     closeComingSoon
 };
+
+// Live chat injector removed

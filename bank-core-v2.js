@@ -57,9 +57,7 @@ const VanstraBank = (function() {
         if (!localStorage.getItem('adminEvents')) {
             localStorage.setItem('adminEvents', JSON.stringify([]));
         }
-        if (!localStorage.getItem('chatMessages')) {
-            localStorage.setItem('chatMessages', JSON.stringify([]));
-        }
+        // Chat system removed: chatMessages no longer initialized
     }
 
     init();
@@ -472,7 +470,8 @@ const VanstraBank = (function() {
         return { success: true, transaction };
     }
 
-    // ==================== CHAT SYSTEM ====================
+    // Chat system removed.
+    // ==================== EMAIL / MISC ====================
 
     function sendEmail(to, subject, body, extraVars = {}) {
         try {
@@ -521,48 +520,7 @@ const VanstraBank = (function() {
         }
     }
 
-    function sendChatMessage(userId, message) {
-        const chatMsg = {
-            id: 'MSG-' + Date.now(),
-            userId: userId,
-            message: message,
-            from: 'user',
-            timestamp: new Date().toISOString(),
-            read: false
-        };
-        const messages = JSON.parse(localStorage.getItem('chatMessages'));
-
-        // Check if this is the user's first message in chat
-        const hadPreviousUserMessage = messages.some(m => m.userId === userId && m.from === 'user');
-
-        messages.push(chatMsg);
-
-        // If this is the first user message, add an automated admin prompt requesting their email
-        if (!hadPreviousUserMessage) {
-            const adminPrompt = {
-                id: 'MSG-' + (Date.now() + 1),
-                userId: userId,
-                message: "Hi there — to help you faster, please confirm the email address associated with your account.",
-                from: 'admin',
-                timestamp: new Date().toISOString(),
-                read: false,
-                system: true
-            };
-            messages.push(adminPrompt);
-            emit('chat_message', adminPrompt);
-        }
-
-        localStorage.setItem('chatMessages', JSON.stringify(messages));
-
-        emit('chat_message', chatMsg);
-
-        return { success: true, message: chatMsg };
-    }
-
-    function getChatMessages(userId) {
-        const messages = JSON.parse(localStorage.getItem('chatMessages'));
-        return messages.filter(m => m.userId === userId);
-    }
+    // Chat functions removed to disable internal chat feature.
 
     // ==================== ADMIN FUNCTIONS ====================
 
@@ -600,24 +558,7 @@ const VanstraBank = (function() {
         return JSON.parse(localStorage.getItem('adminEvents') || '[]');
     }
 
-    function adminReply(userId, message) {
-        const chatMsg = {
-            id: 'MSG-' + Date.now(),
-            userId: userId,
-            message: message,
-            from: 'admin',
-            timestamp: new Date().toISOString(),
-            read: false
-        };
-
-        const messages = JSON.parse(localStorage.getItem('chatMessages'));
-        messages.push(chatMsg);
-        localStorage.setItem('chatMessages', JSON.stringify(messages));
-
-        emit('admin_reply', chatMsg);
-
-        return { success: true, message: chatMsg };
-    }
+    // adminReply removed along with internal chat support.
 
     // ==================== UTILITIES ====================
 
@@ -933,10 +874,7 @@ const VanstraBank = (function() {
         payBill,
         submitDeposit,
         
-        // Chat
-        sendChatMessage,
-        getChatMessages,
-        adminReply,
+        // Chat (removed)
         // Email (simulated)
         sendEmail,
         
