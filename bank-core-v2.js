@@ -737,6 +737,27 @@ const VanstraBank = (function() {
         }
     }
 
+    // ==================== USER UPDATE ====================
+
+    function updateUser(user) {
+        try {
+            const users = JSON.parse(localStorage.getItem('vanstraUsers'));
+            if (!users[user.id]) {
+                return { success: false, error: 'User not found' };
+            }
+            
+            users[user.id] = { ...users[user.id], ...user };
+            localStorage.setItem('vanstraUsers', JSON.stringify(users));
+            
+            // Emit user updated event
+            emit('user_updated', { userId: user.id, user: users[user.id] });
+            
+            return { success: true, user: users[user.id] };
+        } catch (e) {
+            return { success: false, error: e.message };
+        }
+    }
+
     // ==================== PASSWORD RECOVERY ====================
 
     function requestPasswordReset(email) {
@@ -860,6 +881,7 @@ const VanstraBank = (function() {
         updateProfile,
         updateAvatar,
         updateSecuritySettings,
+        updateUser,
         
         // Password Recovery
         requestPasswordReset,

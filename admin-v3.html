@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Vanstra Bank</title>
+    
+    <style>
+        :root {
+            --navy: #041225;
+            --slate: #0B2A3F;
+            --gold: #C89A3A;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #071029 0%, #041423 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: linear-gradient(180deg, var(--slate) 0%, #051f31 100%);
+            padding: 24px;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            max-height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: var(--gold);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 20px;
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            background: none;
+            color: #94a3b8;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item:hover {
+            background: rgba(200, 154, 58, 0.1);
+            color: var(--gold);
+            transform: translateX(4px);
+        }
+
+        .nav-item.active {
+            background: rgba(200, 154, 58, 0.2);
+            color: var(--gold);
+            border-left: 3px solid var(--gold);
+            padding-left: 13px;
+        }
+
+        .nav-item svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Main Content */
+        .main {
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--slate) 100%);
+            padding: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .admin-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .admin-info h3 {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .admin-info p {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--success);
+        }
+
+        .sync-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 13px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--gold);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #d4a945;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Content */
+        .content {
+            padding: 24px;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        /* Cards Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(200, 154, 58, 0.1), rgba(200, 154, 58, 0.05));
+            border: 1px solid rgba(200, 154, 58, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: rgba(200, 154, 58, 0.6);
+            transform: translateY(-4px);
+        }
+
+        .stat-label {
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            color: var(--success);
+        }
+
+        /* Tables */
+        .card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .card-body {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            padding: 16px 24px;
+            text-align: left;
+            font-weight: 600;
+            color: #94a3b8;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 16px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .user-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--gold), #d4a945);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-info h4 {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .user-info p {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.online {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .status-badge.offline {
+            background: rgba(107, 114, 128, 0.2);
+            color: #9ca3af;
+        }
+
+        .status-badge.active {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .status-badge.frozen {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, var(--navy), var(--slate));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 32px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 24px;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--gold);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .search-box {
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            min-width: 300px;
+        }
+
+        .search-box::placeholder {
+            color: #94a3b8;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .btn-sm {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .btn-success:hover {
+            background: rgba(16, 185, 129, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .search-box {
+                min-width: auto;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">V</div>
+                <div class="brand-name">Vanstra</div>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-item active" onclick="showSection('dashboard')" data-section="dashboard">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-3m0 0l7-4 7 4M5 9v10a1 1 0 001 1h12a1 1 0 001-1V9m-9 11l4-4m0 0l4 4m-4-4V3"></path></svg>
+                    Dashboard
+                </button>
+                <button class="nav-item" onclick="showSection('users')" data-section="users">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.856-1.487M15 10h.01M13 16H9m4 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    Users
+                </button>
+                <button class="nav-item" onclick="showSection('transactions')" data-section="transactions">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    Transactions
+                </button>
+            </nav>
+
+            <div style="margin-top: auto; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <button class="nav-item" onclick="logout()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Main -->
+        <div class="main">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-left">
+                    <div class="admin-profile">
+                        <div class="admin-avatar" id="adminInitials">A</div>
+                        <div class="admin-info">
+                            <h3 id="adminName">Administrator</h3>
+                            <p id="adminEmail">admin@vanstra.bank</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-secondary" onclick="updateAdminDashboard()">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581"></path></svg>
+                        Refresh
+                    </button>
+                    <div class="sync-status" id="syncStatus">
+                        <div class="sync-dot"></div>
+                        <span id="syncText">Synced</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="content">
+                <!-- Dashboard Section -->
+                <div class="section active" id="dashboardSection">
+                    <h1 class="page-title">Dashboard</h1>
+
+                    <!-- Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Users</div>
+                            <div class="stat-value" id="totalUsers">0</div>
+                            <div class="stat-change">All registered users</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Online Users</div>
+                            <div class="stat-value" id="onlineUsers">0</div>
+                            <div class="stat-change">Currently active</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Balance</div>
+                            <div class="stat-value" id="totalBalance">€0</div>
+                            <div class="stat-change">Across all accounts</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Today's Transactions</div>
+                            <div class="stat-value" id="todayTransactions">0</div>
+                            <div class="stat-change">Total processed</div>
+                        </div>
+                    </div>
+
+                    <!-- Users Table -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Recent Users</h2>
+                            <span id="userCount">0 users</span>
+                        </div>
+                        <div class="card-body">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Account</th>
+                                        <th>Balance</th>
+                                        <th>Status</th>
+                                        <th>Last Login</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTable">
+                                    <tr><td colspan="5" style="text-align: center; padding: 32px;">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Management Section -->
+                <div class="section" id="usersSection">
+                    <h1 class="page-title">User Management</h1>
+
+                    <div style="margin-bottom: 24px;">
+                        <input type="text" class="search-box" id="userSearch" placeholder="Search users by name or email..." onkeyup="searchUsers()">
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">All Users</h2>
+                            <span id="usersCountLabel">0 users</span>
+                        </div>
+                        <div class="card-body">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Account Type</th>
+                                        <th>Balance</th>
+                                        <th>Status</th>
+                                        <th>Account</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersManagementTable">
+                                    <tr><td colspan="6" style="text-align: center; padding: 32px;">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transactions Section -->
+                <div class="section" id="transactionsSection">
+                    <h1 class="page-title">Transactions</h1>
+                    <div class="card">
+                        <div class="card-body" style="padding: 32px; text-align: center; color: #94a3b8;">
+                            <p>Transactions analytics coming soon...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Management Modal -->
+    <div class="modal-overlay" id="userModalOverlay" onclick="closeUserModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeUserModal()">×</button>
+            <div class="modal-header">Manage User Account</div>
+
+            <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" id="userNameDisplay" class="form-input" readonly>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="text" id="userEmailDisplay" class="form-input" readonly>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Current Balance</label>
+                <input type="text" id="currentBalance" class="form-input" readonly>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Account Status</label>
+                <div class="action-buttons">
+                    <button class="btn btn-success btn-sm" onclick="updateUserStatus(currentEditingUserId, 'unfreeze')">✓ Active</button>
+                    <button class="btn btn-danger btn-sm" onclick="updateUserStatus(currentEditingUserId, 'freeze')">❄️ Freeze</button>
+                    <button class="btn btn-danger btn-sm" onclick="updateUserStatus(currentEditingUserId, 'block')">🚫 Block</button>
+                    <button class="btn btn-warning btn-sm" onclick="updateUserStatus(currentEditingUserId, 'suspend')">⏸️ Suspend</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Balance Adjustment (€)</label>
+                <div style="display: grid; grid-template-columns: 1fr auto auto; gap: 12px;">
+                    <input type="number" id="balanceAmount" class="form-input" placeholder="Enter amount" step="0.01">
+                    <button class="btn btn-success btn-sm" onclick="adjustBalance(currentEditingUserId, 'add')">+ Add</button>
+                    <button class="btn btn-danger btn-sm" onclick="adjustBalance(currentEditingUserId, 'deduct')">- Deduct</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Set Balance (€)</label>
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 12px;">
+                    <input type="number" id="balanceSet" class="form-input" placeholder="Enter new balance" step="0.01">
+                    <button class="btn btn-primary btn-sm" onclick="adjustBalance(currentEditingUserId, 'set')">Set</button>
+                </div>
+            </div>
+
+            <button class="btn btn-secondary" onclick="closeUserModal()" style="width: 100%; margin-top: 24px;">Close</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="bank-core-v2.js"></script>
+    <script src="realtime-sync.js"></script>
+    <script>
+        const ADMIN_PASSWORD = 'admin123';
+        let currentEditingUserId = null;
+        let allUsers = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check auth
+            if (!sessionStorage.getItem('adminAuthenticated')) {
+                const password = prompt('Enter admin password:');
+                if (password !== ADMIN_PASSWORD) {
+                    alert('Access denied');
+                    window.location.href = 'login.html';
+                } else {
+                    sessionStorage.setItem('adminAuthenticated', 'true');
+                    sessionStorage.setItem('adminLoginTime', new Date().toISOString());
+                }
+            }
+
+            // Initialize
+            initAdmin();
+            startRealtimeSync();
+        });
+
+        function initAdmin() {
+            initializeTestUsers();
+            initializeAdminHeader();
+            loadDashboard();
+            loadUsersManagement();
+            VanstraBank.on('user_updated', () => {
+                loadDashboard();
+                loadUsersManagement();
+            });
+        }
+
+        function initializeTestUsers() {
+            const users = VanstraBank.getAllUsers();
+            if (users.length === 0) {
+                const testUsers = [
+                    { fullName: 'John Smith', email: 'john@vanstra.bank', dateOfBirth: '1990-05-15', phone: '+49301234567', password: 'Test1234!', pin: '1234' },
+                    { fullName: 'Maria Garcia', email: 'maria@vanstra.bank', dateOfBirth: '1992-08-22', phone: '+49301234568', password: 'Test1234!', pin: '5678' },
+                    { fullName: 'Ahmed Hassan', email: 'ahmed@vanstra.bank', dateOfBirth: '1988-03-10', phone: '+49301234569', password: 'Test1234!', pin: '9012' },
+                    { fullName: 'Sara Mueller', email: 'sara@vanstra.bank', dateOfBirth: '1995-12-01', phone: '+49301234570', password: 'Test1234!', pin: '3456' },
+                    { fullName: 'Carlos Rodriguez', email: 'carlos@vanstra.bank', dateOfBirth: '1987-07-20', phone: '+49301234571', password: 'Test1234!', pin: '7890' }
+                ];
+                testUsers.forEach(u => VanstraBank.createAccount(u));
+            }
+        }
+
+        function initializeAdminHeader() {
+            const initials = 'AD';
+            document.getElementById('adminInitials').textContent = initials;
+            document.getElementById('adminName').textContent = 'Administrator';
+            document.getElementById('adminEmail').textContent = 'admin@vanstra.bank';
+        }
+
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            document.getElementById(sectionName + 'Section').classList.add('active');
+
+            // Update nav
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+        }
+
+        function loadDashboard() {
+            const users = VanstraBank.getAllUsers();
+            allUsers = users;
+
+            document.getElementById('totalUsers').textContent = users.length;
+            document.getElementById('onlineUsers').textContent = users.filter(u => u.isOnline).length;
+            document.getElementById('userCount').textContent = users.length + ' users';
+
+            const totalBalance = users.reduce((sum, u) => sum + u.balance, 0);
+            document.getElementById('totalBalance').textContent = '€' + totalBalance.toLocaleString('de-DE', {minimumFractionDigits: 2});
+
+            const todayTxns = users.reduce((sum, u) => {
+                const today = new Date().toDateString();
+                return sum + (u.transactions || []).filter(tx => new Date(tx.timestamp).toDateString() === today).length;
+            }, 0);
+            document.getElementById('todayTransactions').textContent = todayTxns;
+
+            const tableBody = document.getElementById('usersTable');
+            tableBody.innerHTML = users.slice(0, 10).map(user => `
+                <tr>
+                    <td>
+                        <div class="user-cell">
+                            <div class="user-avatar">${user.fullName.split(' ').map(n => n[0]).join('')}</div>
+                            <div class="user-info">
+                                <h4>${user.fullName}</h4>
+                                <p>${user.email}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${user.accountNumber}</td>
+                    <td><strong>€${user.balance.toLocaleString('de-DE', {minimumFractionDigits: 2})}</strong></td>
+                    <td><span class="status-badge ${user.isOnline ? 'online' : 'offline'}">${user.isOnline ? '🟢 Online' : '🔴 Offline'}</span></td>
+                    <td>${user.lastLogin ? new Date(user.lastLogin).toLocaleString('de-DE') : 'Never'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function loadUsersManagement() {
+            const users = VanstraBank.getAllUsers();
+            document.getElementById('usersCountLabel').textContent = users.length + ' users';
+
+            const tableBody = document.getElementById('usersManagementTable');
+            tableBody.innerHTML = users.map(user => `
+                <tr>
+                    <td>
+                        <div class="user-cell">
+                            <div class="user-avatar">${user.fullName.split(' ').map(n => n[0]).join('')}</div>
+                            <div class="user-info">
+                                <h4>${user.fullName}</h4>
+                                <p>${user.email}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${user.accountType}</td>
+                    <td><strong>€${user.balance.toLocaleString('de-DE', {minimumFractionDigits: 2})}</strong></td>
+                    <td><span class="status-badge ${(user.accountStatus || 'active').toLowerCase()}">${user.accountStatus || 'Active'}</span></td>
+                    <td>${user.isOnline ? '🟢' : '🔴'}</td>
+                    <td><button class="btn btn-primary btn-sm" onclick="openUserModal('${user.id}', '${user.fullName}', '${user.email}', '${user.balance}')">Edit</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function searchUsers() {
+            const term = document.getElementById('userSearch').value.toLowerCase();
+            const filtered = allUsers.filter(u => u.fullName.toLowerCase().includes(term) || u.email.toLowerCase().includes(term));
+            const tableBody = document.getElementById('usersManagementTable');
+            tableBody.innerHTML = filtered.map(user => `
+                <tr>
+                    <td>
+                        <div class="user-cell">
+                            <div class="user-avatar">${user.fullName.split(' ').map(n => n[0]).join('')}</div>
+                            <div class="user-info">
+                                <h4>${user.fullName}</h4>
+                                <p>${user.email}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${user.accountType}</td>
+                    <td><strong>€${user.balance.toLocaleString('de-DE', {minimumFractionDigits: 2})}</strong></td>
+                    <td><span class="status-badge ${(user.accountStatus || 'active').toLowerCase()}">${user.accountStatus || 'Active'}</span></td>
+                    <td>${user.isOnline ? '🟢' : '🔴'}</td>
+                    <td><button class="btn btn-primary btn-sm" onclick="openUserModal('${user.id}', '${user.fullName}', '${user.email}', '${user.balance}')">Edit</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function openUserModal(id, name, email, balance) {
+            currentEditingUserId = id;
+            document.getElementById('userNameDisplay').value = name;
+            document.getElementById('userEmailDisplay').value = email;
+            document.getElementById('currentBalance').value = '€' + parseFloat(balance).toLocaleString('de-DE', {minimumFractionDigits: 2});
+            document.getElementById('userModalOverlay').classList.add('active');
+        }
+
+        function closeUserModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('userModalOverlay').classList.remove('active');
+            currentEditingUserId = null;
+        }
+
+        function updateUserStatus(userId, action) {
+            const user = allUsers.find(u => u.id === userId);
+            if (!user) return;
+
+            const statusMap = {
+                'unfreeze': 'active',
+                'freeze': 'frozen',
+                'block': 'blocked',
+                'suspend': 'suspended'
+            };
+
+            const newStatus = statusMap[action];
+            VanstraBank.updateUser({...user, accountStatus: newStatus});
+            const users = VanstraBank.getAllUsers();
+            localStorage.setItem('vanstraUsers', JSON.stringify(users.reduce((obj, u) => {obj[u.id] = u; return obj}, {})));
+            loadUsersManagement();
+            alert(`Status updated to ${newStatus}`);
+        }
+
+        function adjustBalance(userId, action) {
+            const user = allUsers.find(u => u.id === userId);
+            if (!user) return;
+
+            let newBalance = user.balance;
+
+            if (action === 'add') {
+                const amt = parseFloat(document.getElementById('balanceAmount').value);
+                if (isNaN(amt) || amt <= 0) {alert('Invalid amount'); return;}
+                newBalance += amt;
+            } else if (action === 'deduct') {
+                const amt = parseFloat(document.getElementById('balanceAmount').value);
+                if (isNaN(amt) || amt <= 0) {alert('Invalid amount'); return;}
+                newBalance -= amt;
+            } else if (action === 'set') {
+                const amt = parseFloat(document.getElementById('balanceSet').value);
+                if (isNaN(amt) || amt < 0) {alert('Invalid balance'); return;}
+                newBalance = amt;
+            }
+
+            if (newBalance < 0) {alert('Balance cannot be negative'); return;}
+
+            VanstraBank.updateUser({...user, balance: newBalance});
+            const users = VanstraBank.getAllUsers();
+            localStorage.setItem('vanstraUsers', JSON.stringify(users.reduce((obj, u) => {obj[u.id] = u; return obj}, {})));
+
+            document.getElementById('currentBalance').value = '€' + newBalance.toLocaleString('de-DE', {minimumFractionDigits: 2});
+            document.getElementById('balanceAmount').value = '';
+            document.getElementById('balanceSet').value = '';
+            loadUsersManagement();
+            alert(`Balance ${action}ed successfully!`);
+        }
+
+        function updateAdminDashboard() {
+            loadDashboard();
+            loadUsersManagement();
+            updateSyncStatus();
+        }
+
+        function startRealtimeSync() {
+             setInterval(() => {
+                updateAdminDashboard();
+            }, 2000);
+        }
+
+        function updateSyncStatus() {
+            const elm = document.getElementById('syncStatus');
+            const timeStr = new Date().toLocaleTimeString();
+            document.getElementById('syncText').textContent = 'Synced - ' + timeStr;
+        }
+
+        function logout() {
+            sessionStorage.removeItem('adminAuthenticated');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

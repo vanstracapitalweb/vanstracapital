@@ -1902,9 +1902,26 @@
             renderTransactions();
             loadAnnouncements();
             monitorAccountStatus();
+            startRealtimeSyncDashboard();
             
             // Chat handlers removed (internal chat disabled)
         });
+
+        // Start real-time sync watching
+        function startRealtimeSyncDashboard() {
+            // Poll every 2 seconds
+            setInterval(() => {
+                const latestUser = VanstraBank.getCurrentUser();
+                if (latestUser && latestUser.balance !== currentUser.balance) {
+                    console.log('Balance change detected:', currentUser.balance, '->', latestUser.balance);
+                    currentUser = latestUser;
+                    document.getElementById('balanceAmount').textContent = formatBalanceDisplay(currentUser.balance);
+                    document.getElementById('availableBalance').textContent = VanstraBank.formatCurrency(currentUser.balance);
+                    document.getElementById('billAvailableBalance').textContent = VanstraBank.formatCurrency(currentUser.balance);
+                    renderTransactions();
+                }
+            }, 2000);
+        }
 
         function getTimeBasedGreeting() {
             const hour = new Date().getHours();
@@ -2602,9 +2619,17 @@
                     if (!currentUser) {
                         currentUser = VanstraBank.getAllUsers()[0];
                     }
+                    // Reload all user data
                     loadUserData();
                     renderTransactions();
                     updateBalanceTimestamp();
+                    
+                    // Update the balance amount element explicitly
+                    if (currentUser && currentUser.balance) {
+                        document.getElementById('balanceAmount').textContent = formatBalanceDisplay(currentUser.balance);
+                        document.getElementById('availableBalance').textContent = VanstraBank.formatCurrency(currentUser.balance);
+                        document.getElementById('billAvailableBalance').textContent = VanstraBank.formatCurrency(currentUser.balance);
+                    }
                     
                     if (result.transaction) {
                         setTimeout(() => showReceipt(result.transaction.id), 300);
@@ -2653,12 +2678,13 @@
             }
             currentUser.transactions.unshift(transactionRecord); // Add to start
             
-            // Save to VanstraBank
+            // Save to VanstraBank - using the new updateUser function
             try {
                 VanstraBank.updateUser(currentUser);
-                // Also ensure localStorage is updated
-                const users = VanstraBank.getAllUsers();
-                localStorage.setItem('users', JSON.stringify(users));
+                // Also ensure localStorage is updated with the user object format
+                const users = JSON.parse(localStorage.getItem('vanstraUsers') || '{}');
+                users[currentUser.id] = currentUser;
+                localStorage.setItem('vanstraUsers', JSON.stringify(users));
                 console.log('✓ Balance updated and saved: ' + newBalance);
             } catch(e) {
                 console.error('Error saving balance:', e);
