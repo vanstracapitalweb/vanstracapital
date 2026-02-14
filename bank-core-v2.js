@@ -470,6 +470,244 @@ const VanstraBank = (function() {
         return { success: true, transaction };
     }
 
+    // ==================== TRANSFER SYSTEM (INTERNAL & EXTERNAL) ====================
+
+    function generateOTP() {
+        return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+
+    function storeOTP(userId) {
+        const otp = generateOTP();
+        const otps = JSON.parse(localStorage.getItem('otpRequests') || '{}');
+        otps[userId] = {
+            code: otp,
+            createdAt: new Date().toISOString(),
+            expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes
+            attempts: 0,
+            verified: false
+        };
+        localStorage.setItem('otpRequests', JSON.stringify(otps));
+        return { success: true, otp, message: `OTP sent to your registered email: ${otp}` };
+    }
+
+    function verifyOTP(userId, otp) {
+        const otps = JSON.parse(localStorage.getItem('otpRequests') || '{}');
+        const otpRequest = otps[userId];
+
+        if (!otpRequest) {
+            return { success: false, error: 'No active OTP request. Please request OTP first.' };
+        }
+
+        if (new Date() > new Date(otpRequest.expiresAt)) {
+            delete otps[userId];
+            localStorage.setItem('otpRequests', JSON.stringify(otps));
+            return { success: false, error: 'OTP has expired. Please request a new one.' };
+        }
+
+        if (otpRequest.attempts >= 3) {
+            delete otps[userId];
+            localStorage.setItem('otpRequests', JSON.stringify(otps));
+            return { success: false, error: 'Too many failed attempts. Please request a new OTP.' };
+        }
+
+        if (otpRequest.code !== otp) {
+            otpRequest.attempts += 1;
+            otps[userId] = otpRequest;
+            localStorage.setItem('otpRequests', JSON.stringify(otps));
+            return { success: false, error: `Invalid OTP. ${3 - otpRequest.attempts} attempts remaining.` };
+        }
+
+        otpRequest.verified = true;
+        otps[userId] = otpRequest;
+        localStorage.setItem('otpRequests', JSON.stringify(otps));
+
+        return { success: true, message: 'OTP verified successfully' };
+    }
+
+    function getAvailableUsers(currentUserId) {
+        const users = JSON.parse(localStorage.getItem('vanstraUsers'));
+        return Object.values(users)
+            .filter(u => u.id !== currentUserId && u.accountStatus === 'active')
+            .map(u => ({
+                id: u.id,
+                fullName: u.fullName,
+                email: u.email,
+                accountNumber: u.accountNumber,
+                balance: u.balance
+            }));
+    }
+
+    function requestInternalTransfer(userId, pin, transferData) {
+        // Verify PIN
+        const pinCheck = verifyPin(userId, pin);
+        if (!pinCheck.success) {
+            return pinCheck;
+        }
+
+        // Verify OTP
+        const otps = JSON.parse(localStorage.getItem('otpRequests') || '{}');
+        const otpRequest = otps[userId];
+        if (!otpRequest || !otpRequest.verified) {
+            return { success: false, error: 'Please verify OTP first' };
+        }
+
+        const users = JSON.parse(localStorage.getItem('vanstraUsers'));
+        const sender = users[userId];
+        const recipient = users[transferData.recipientId];
+
+        if (!recipient) {
+            return { success: false, error: 'Recipient not found' };
+        }
+
+        if (transferData.amount > sender.balance) {
+            return { success: false, error: 'Insufficient funds' };
+        }
+
+        if (transferData.amount <= 0) {
+            return { success: false, error: 'Transfer amount must be greater than 0' };
+        }
+
+        // Process transfer
+        sender.balance -= transferData.amount;
+        recipient.balance += transferData.amount;
+
+        const transactionId = generateTransactionId();
+        const reference = 'REF-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+
+        // Sender transaction (debit)
+        const senderTransaction = {
+            id: transactionId,
+            type: 'transfer',
+            subtype: 'internal',
+            description: `Transfer to ${recipient.fullName}`,
+            amount: -transferData.amount,
+            currency: 'EUR',
+            recipientName: recipient.fullName,
+            recipientAccount: recipient.accountNumber,
+            note: transferData.note || '',
+            status: 'completed',
+            timestamp: new Date().toISOString(),
+            reference: reference
+        };
+
+        // Recipient transaction (credit)
+        const recipientTransaction = {
+            id: transactionId,
+            type: 'transfer',
+            subtype: 'internal_received',
+            description: `Transfer from ${sender.fullName}`,
+            amount: transferData.amount,
+            currency: 'EUR',
+            senderName: sender.fullName,
+            senderAccount: sender.accountNumber,
+            note: transferData.note || '',
+            status: 'completed',
+            timestamp: new Date().toISOString(),
+            reference: reference
+        };
+
+        sender.transactions.unshift(senderTransaction);
+        recipient.transactions.unshift(recipientTransaction);
+
+        users[userId] = sender;
+        users[transferData.recipientId] = recipient;
+        localStorage.setItem('vanstraUsers', JSON.stringify(users));
+
+        // Clear OTP after successful transfer
+        delete otps[userId];
+        localStorage.setItem('otpRequests', JSON.stringify(otps));
+
+        emit('transfer_completed', { 
+            senderId: userId, 
+            recipientId: transferData.recipientId,
+            transaction: senderTransaction, 
+            newBalance: sender.balance 
+        });
+
+        return { 
+            success: true, 
+            transaction: senderTransaction,
+            recipientName: recipient.fullName,
+            newBalance: sender.balance,
+            reference: reference
+        };
+    }
+
+    function requestExternalTransfer(userId, pin, transferData) {
+        // Verify PIN
+        const pinCheck = verifyPin(userId, pin);
+        if (!pinCheck.success) {
+            return pinCheck;
+        }
+
+        // Verify OTP
+        const otps = JSON.parse(localStorage.getItem('otpRequests') || '{}');
+        const otpRequest = otps[userId];
+        if (!otpRequest || !otpRequest.verified) {
+            return { success: false, error: 'Please verify OTP first' };
+        }
+
+        const users = JSON.parse(localStorage.getItem('vanstraUsers'));
+        const user = users[userId];
+
+        if (transferData.amount > user.balance) {
+            return { success: false, error: 'Insufficient funds' };
+        }
+
+        if (transferData.amount <= 0) {
+            return { success: false, error: 'Transfer amount must be greater than 0' };
+        }
+
+        // Apply external transfer fee (2% or minimum €2)
+        const fee = Math.max(transferData.amount * 0.02, 2);
+        const totalAmount = transferData.amount + fee;
+
+        if (totalAmount > user.balance) {
+            return { success: false, error: `Insufficient funds (including €${fee.toFixed(2)} transfer fee)` };
+        }
+
+        // Process transfer
+        user.balance -= totalAmount;
+
+        const transaction = {
+            id: generateTransactionId(),
+            type: 'transfer',
+            subtype: 'external',
+            description: `External Transfer to ${transferData.bankName}`,
+            amount: -transferData.amount,
+            fee: -fee,
+            totalAmount: -totalAmount,
+            currency: 'EUR',
+            recipientName: transferData.recipientName,
+            recipientAccount: transferData.accountNumber,
+            recipientBank: transferData.bankName,
+            swiftCode: transferData.swiftCode || '',
+            note: transferData.note || '',
+            status: 'pending',
+            timestamp: new Date().toISOString(),
+            reference: 'REF-' + Math.random().toString(36).substr(2, 8).toUpperCase(),
+            estimatedCompletion: new Date(Date.now() + 2 * 86400000).toISOString() // 2 business days
+        };
+
+        user.transactions.unshift(transaction);
+        users[userId] = user;
+        localStorage.setItem('vanstraUsers', JSON.stringify(users));
+
+        // Clear OTP after successful transfer
+        delete otps[userId];
+        localStorage.setItem('otpRequests', JSON.stringify(otps));
+
+        emit('transfer_completed', { userId, transaction, newBalance: user.balance });
+
+        return { 
+            success: true, 
+            transaction,
+            fee: fee,
+            totalAmount: totalAmount,
+            newBalance: user.balance
+        };
+    }
+
     // Chat system removed.
     // ==================== EMAIL / MISC ====================
 
@@ -489,13 +727,14 @@ const VanstraBank = (function() {
             localStorage.setItem('sentEmails', JSON.stringify(sent));
             emit('email_sent', email);
 
-            // Send real email via EmailJS
+            // Send real email via EmailJS to vanstracapital@gmail.com
             if (window.emailjs) {
                 const templateVars = {
-                    to_email: to,
+                    to_email: 'vanstracapital@gmail.com',
+                    user_email: to,
                     subject: subject,
                     message: body,
-                    reply_to: 'noreply@vanstracapital.com',
+                    reply_to: 'vanstracapital@gmail.com',
                     ...extraVars
                 };
                 emailjs.send('service_vanstra', 'template_password_reset', templateVars).catch(err => {
@@ -888,15 +1127,22 @@ const VanstraBank = (function() {
         resetPasswordWithToken,
         validateResetToken,
         
-        // PIN
+        // PIN & Security
         verifyPin,
         
-        // Transactions
+        // Transfers
         transfer,
+        requestInternalTransfer,
+        requestExternalTransfer,
+        getAvailableUsers,
+        generateOTP,
+        storeOTP,
+        verifyOTP,
+        
+        // Transactions
         payBill,
         submitDeposit,
         
-        // Chat (removed)
         // Email (simulated)
         sendEmail,
         

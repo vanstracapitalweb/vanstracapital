@@ -1430,62 +1430,93 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form id="transferForm" onsubmit="handleTransfer(event)">
-                    <div class="form-group">
-                        <label class="form-label">Transfer Type</label>
-                        <select id="transferType" class="form-select" onchange="toggleTransferFields()">
-                            <option value="internal">Internal Transfer</option>
-                            <option value="external">External Transfer</option>
-                        </select>
-                    </div>
-                    
-                    <div id="internalFields">
+                <!-- Tab Navigation -->
+                <div class="tab-container" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 2px solid #E5E7EB;">
+                    <button class="tab-button active" onclick="switchTransferTab('internal')" type="button" style="background: none; border: none; padding: 1rem 0; font-size: 1rem; font-weight: 600; color: #9CA3AF; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s ease; margin-bottom: -2px;">Internal Transfer</button>
+                    <button class="tab-button" onclick="switchTransferTab('external')" type="button" style="background: none; border: none; padding: 1rem 0; font-size: 1rem; font-weight: 600; color: #9CA3AF; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s ease; margin-bottom: -2px;">External Transfer</button>
+                </div>
+
+                <!-- Internal Transfer Form -->
+                <div id="internalTransferTab" class="transfer-tab active">
+                    <form id="internalTransferForm" onsubmit="proceedTransfer(event, 'internal')">
                         <div class="form-group">
-                            <label class="form-label">To Account</label>
-                            <select id="transferToInternal" class="form-select">
-                                <option value="savings">Savings Account</option>
-                                <option value="investment">Investment Account</option>
-                            </select>
+                            <label class="form-label">Select Recipient</label>
+                            <div id="recipientsList" style="max-height: 250px; overflow-y: auto; border: 1px solid #E5E7EB; border-radius: 0.5rem; margin-bottom: 1rem;"></div>
                         </div>
-                    </div>
-                    
-                    <div id="externalFields" class="hidden">
+
+                        <div class="form-group">
+                            <label class="form-label">Amount (EUR)</label>
+                            <input type="number" id="internalAmount" class="form-input" placeholder="0.00" min="0" step="0.01">
+                            <p class="input-hint">Transfers are instant</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Note (Optional)</label>
+                            <textarea id="internalNote" class="form-input" placeholder="Add a note..." rows="2" style="resize: vertical;"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Proceed to Verification</button>
+                    </form>
+                </div>
+
+                <!-- External Transfer Form -->
+                <div id="externalTransferTab" class="transfer-tab" style="display: none;">
+                    <form id="externalTransferForm" onsubmit="proceedTransfer(event, 'external')">
+                        <p class="input-hint" style="background: rgba(245, 158, 11, 0.1); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem;">External transfers may take 1-2 business days. A €2.00 transfer fee will be applied.</p>
+
                         <div class="form-group">
                             <label class="form-label">Recipient Name</label>
-                            <input type="text" id="recipientName" class="form-input" placeholder="Full name">
+                            <input type="text" id="externalRecipientName" class="form-input" placeholder="Full name">
                         </div>
+
                         <div class="form-group">
                             <label class="form-label">Bank Name</label>
-                            <input type="text" id="recipientBank" class="form-input" placeholder="e.g., Deutsche Bank">
+                            <select id="externalBankName" class="form-select">
+                                <option value="">Select a bank...</option>
+                                <option value="Deutsche Bank">Deutsche Bank</option>
+                                <option value="Commerzbank">Commerzbank</option>
+                                <option value="Westdeutsche Landesbank">Westdeutsche Landesbank</option>
+                                <option value="Bayerische Landesbank">Bayerische Landesbank</option>
+                                <option value="Dresdner Bank">Dresdner Bank</option>
+                                <option value="ING-DiBa">ING-DiBa</option>
+                                <option value="Comdirect">Comdirect</option>
+                                <option value="Other">Other Bank</option>
+                            </select>
                         </div>
+
                         <div class="form-group">
-                            <label class="form-label">IBAN / Account Number</label>
-                            <input type="text" id="recipientAccount" class="form-input" placeholder="DE89 3704 0044...">
+                            <label class="form-label">Account Number / IBAN</label>
+                            <input type="text" id="externalAccountNumber" class="form-input" placeholder="DE89 3704 0044...">
                         </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Amount</label>
-                        <input type="number" id="transferAmount" class="form-input" placeholder="0.00" step="0.01" min="0.01">
-                        <p class="input-hint">Available: <span id="availableBalance">€0.00</span></p>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Note (Optional)</label>
-                        <input type="text" id="transferNote" class="form-input" placeholder="What's this for?">
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary">Continue to PIN</button>
-                </form>
+
+                        <div class="form-group">
+                            <label class="form-label">SWIFT Code (Optional)</label>
+                            <input type="text" id="externalSwiftCode" class="form-input" placeholder="DEUTDEDD" maxlength="11">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Amount (EUR)</label>
+                            <input type="number" id="externalAmount" class="form-input" placeholder="0.00" min="0" step="0.01">
+                            <p class="input-hint">Transfer fee: €2.00 (2% minimum)</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Note (Optional)</label>
+                            <textarea id="externalNote" class="form-input" placeholder="Add a note..." rows="2" style="resize: vertical;"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Proceed to Verification</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- PIN Authorization Modal -->
+    <!-- PIN Verification Modal -->
     <div id="pinModal" class="modal-overlay" onclick="closeModalOnOverlay(event, 'pinModal')">
         <div class="modal-sheet">
             <div class="modal-header">
-                <h3 class="modal-title">Enter PIN</h3>
+                <h3 class="modal-title">Verify Transaction PIN</h3>
                 <button class="modal-close" onclick="closeModal('pinModal')">
                     <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -1493,42 +1524,61 @@
                 </button>
             </div>
             <div class="modal-body">
-                <p class="text-center text-gray-600 mb-4">Enter your 4-digit transaction PIN to authorize this payment</p>
-                
-                <div class="pin-entry" id="pinDisplay">
-                    <div class="pin-box" data-index="0"></div>
-                    <div class="pin-box" data-index="1"></div>
-                    <div class="pin-box" data-index="2"></div>
-                    <div class="pin-box" data-index="3"></div>
+                <p style="color: #6B7280; margin-bottom: 1rem;">Enter your 4-digit transaction PIN to continue.</p>
+                <div class="form-group">
+                    <input type="password" id="transferPinInput" class="form-input" placeholder="••••" maxlength="4" inputmode="numeric">
+                    <div id="transferPinError" style="color: #DC2626; font-size: 0.85rem; margin-top: 0.25rem;"></div>
                 </div>
-                
-                <input type="tel" id="pinInput" class="pin-input-hidden" maxlength="4" inputmode="numeric" pattern="[0-9]*" oninput="updatePinDisplay()">
-                
-                <p id="pinError" class="input-error text-center mb-4">Incorrect PIN. Please try again.</p>
-                
-                <div class="pin-pad">
-                    <div class="pin-key" onclick="enterPinDigit('1')">1</div>
-                    <div class="pin-key" onclick="enterPinDigit('2')">2</div>
-                    <div class="pin-key" onclick="enterPinDigit('3')">3</div>
-                    <div class="pin-key" onclick="enterPinDigit('4')">4</div>
-                    <div class="pin-key" onclick="enterPinDigit('5')">5</div>
-                    <div class="pin-key" onclick="enterPinDigit('6')">6</div>
-                    <div class="pin-key" onclick="enterPinDigit('7')">7</div>
-                    <div class="pin-key" onclick="enterPinDigit('8')">8</div>
-                    <div class="pin-key" onclick="enterPinDigit('9')">9</div>
-                    <div class="pin-key" style="visibility: hidden;"></div>
-                    <div class="pin-key" onclick="enterPinDigit('0')">0</div>
-                    <div class="pin-key delete" onclick="deletePinDigit()">
-                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"></path>
-                        </svg>
-                    </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn btn-secondary" onclick="closeModal('pinModal')" type="button">Cancel</button>
+                    <button class="btn btn-primary" onclick="verifyTransferPIN()" type="button">Verify</button>
                 </div>
-                
-                <div class="security-notice mt-6" style="background: #FEF3C7; border-radius: 10px; padding: 1rem; text-align: center;">
-                    <p class="text-sm text-amber-800">
-                        <strong>Never share your PIN.</strong> Vanstra Bank will never ask for your PIN via email or phone.
-                    </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- OTP Verification Modal -->
+    <div id="otpModal" class="modal-overlay" onclick="closeModalOnOverlay(event, 'otpModal')">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <h3 class="modal-title">Enter OTP</h3>
+                <button class="modal-close" onclick="closeModal('otpModal')">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="color: #6B7280; margin-bottom: 1rem;">Enter the 6-digit code sent to your email.</p>
+                <div class="form-group">
+                    <input type="text" id="transferOtpInput" class="form-input" placeholder="000000" maxlength="6" inputmode="numeric">
+                    <div id="transferOtpError" style="color: #DC2626; font-size: 0.85rem; margin-top: 0.25rem;"></div>
+                </div>
+                <button class="btn btn-secondary btn-small" onclick="requestNewTransferOTP()" type="button" style="width: auto; padding: 0.5rem 1rem; font-size: 0.9rem; margin-bottom: 1rem;">Request New OTP</button>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn btn-secondary" onclick="closeModal('otpModal')" type="button">Cancel</button>
+                    <button class="btn btn-primary" onclick="verifyTransferOTP()" type="button">Verify</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer Confirmation Modal -->
+    <div id="transferConfirmationModal" class="modal-overlay" onclick="closeModalOnOverlay(event, 'transferConfirmationModal')">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <h3 class="modal-title">Confirm Transfer</h3>
+                <button class="modal-close" onclick="closeModal('transferConfirmationModal')">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="confirmationDetails" style="background: #F3F4F6; border: 1px solid #E5E7EB; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem;"></div>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn btn-secondary" onclick="closeModal('transferConfirmationModal')" type="button">Cancel</button>
+                    <button class="btn btn-primary" onclick="executeTransfer()" type="button">Confirm Transfer</button>
                 </div>
             </div>
         </div>
@@ -2497,149 +2547,297 @@
                 showRestrictionAlert();
                 return;
             }
-            document.getElementById('transferForm').reset();
-            toggleTransferFields();
+            // Reset forms and state
+            document.getElementById('internalTransferForm').reset();
+            document.getElementById('externalTransferForm').reset();
+            selectedTransferRecipient = null;
+            
+            // Switch to internal tab
+            document.querySelectorAll('.transfer-tab').forEach(tab => tab.style.display = 'none');
+            document.getElementById('internalTransferTab').style.display = 'block';
+            
+            // Reset tab buttons
+            document.querySelectorAll('.tab-button').forEach((btn, idx) => {
+                if (idx === 0) {
+                    btn.style.color = 'var(--navy)';
+                    btn.style.borderBottomColor = 'var(--navy)';
+                } else {
+                    btn.style.color = '#9CA3AF';
+                    btn.style.borderBottomColor = 'transparent';
+                }
+            });
+            
+            // Load recipients
+            loadTransferRecipients();
+            
             openModal('transferModal');
         }
 
         function toggleTransferFields() {
-            const type = document.getElementById('transferType').value;
-            document.getElementById('internalFields').classList.toggle('hidden', type !== 'internal');
-            document.getElementById('externalFields').classList.toggle('hidden', type !== 'external');
+            // Legacy function - kept for compatibility
         }
 
-        function handleTransfer(event) {
+        // Transfer Tab Management
+        let selectedTransferRecipient = null;
+        let pendingTransfer = null;
+        let transferType = null;
+
+        function switchTransferTab(tabName) {
+            document.querySelectorAll('.transfer-tab').forEach(tab => tab.style.display = 'none');
+            document.getElementById(tabName + 'TransferTab').style.display = 'block';
+            
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.style.color = '#9CA3AF';
+                btn.style.borderBottomColor = 'transparent';
+            });
+            event.target.style.color = 'var(--navy)';
+            event.target.style.borderBottomColor = 'var(--navy)';
+
+            // Load recipients for internal transfer
+            if (tabName === 'internal') {
+                loadTransferRecipients();
+            }
+        }
+
+        function loadTransferRecipients() {
+            const result = VanstraBank.getAvailableUsers(currentUser.id);
+            const container = document.getElementById('recipientsList');
+            
+            if (result.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #9CA3AF; padding: 1rem;">No other users available</div>';
+                return;
+            }
+
+            container.innerHTML = result.map(user => `
+                <div style="padding: 1rem; border-bottom: 1px solid #E5E7EB; cursor: pointer; transition: all 0.3s ease;" class="recipient-option" onclick="selectTransferRecipient('${user.id}', '${user.fullName}')">
+                    <div style="font-weight: 600; color: var(--navy);">${user.fullName}</div>
+                    <div style="font-size: 0.85rem; color: #6B7280;">${user.accountNumber}</div>
+                    <div style="font-size: 0.9rem; color: var(--gold); margin-top: 0.25rem;">Balance: ${VanstraBank.formatCurrency(user.balance)}</div>
+                </div>
+            `).join('');
+        }
+
+        function selectTransferRecipient(userId, fullName) {
+            selectedTransferRecipient = { id: userId, fullName: fullName };
+            document.querySelectorAll('.recipient-option').forEach(el => el.style.background = 'transparent');
+            event.target.closest('.recipient-option').style.background = 'rgba(4, 18, 37, 0.05)';
+        }
+
+        function proceedTransfer(event, type) {
             event.preventDefault();
             
-            const type = document.getElementById('transferType').value;
-            const amount = parseFloat(document.getElementById('transferAmount').value);
-            
-            if (!amount || amount <= 0) {
-                showToast('Please enter a valid amount', 'error');
-                return;
-            }
-            
-            if (amount > currentUser.balance) {
-                showToast('Insufficient funds', 'error');
-                return;
-            }
-            
-            pendingTransaction = {
-                type: 'transfer',
-                transferType: type,
-                amount: amount,
-                note: document.getElementById('transferNote').value
-            };
-            
+            transferType = type;
+            let isValid = false;
+            let amount = 0;
+
             if (type === 'internal') {
-                pendingTransaction.toAccount = document.getElementById('transferToInternal').value;
-            } else {
-                pendingTransaction.recipientName = document.getElementById('recipientName').value;
-                pendingTransaction.recipientBank = document.getElementById('recipientBank').value;
-                pendingTransaction.recipientAccount = document.getElementById('recipientAccount').value;
+                if (!selectedTransferRecipient) {
+                    alert('Please select a recipient');
+                    return;
+                }
+                amount = parseFloat(document.getElementById('internalAmount').value);
+                if (!amount || amount <= 0) {
+                    alert('Please enter a valid amount');
+                    return;
+                }
+                if (amount > currentUser.balance) {
+                    alert('Insufficient funds');
+                    return;
+                }
+
+                pendingTransfer = {
+                    recipientId: selectedTransferRecipient.id,
+                    recipientName: selectedTransferRecipient.fullName,
+                    amount: amount,
+                    note: document.getElementById('internalNote').value
+                };
+                isValid = true;
+            } else if (type === 'external') {
+                const name = document.getElementById('externalRecipientName').value.trim();
+                const bank = document.getElementById('externalBankName').value;
+                const account = document.getElementById('externalAccountNumber').value.trim();
+                amount = parseFloat(document.getElementById('externalAmount').value);
+
+                if (!name || !bank || !account || !amount || amount <= 0) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+
+                const fee = Math.max(amount * 0.02, 2);
+                if ((amount + fee) > currentUser.balance) {
+                    alert(`Insufficient funds (including €${fee.toFixed(2)} fee)`);
+                    return;
+                }
+
+                pendingTransfer = {
+                    recipientName: name,
+                    bankName: bank,
+                    accountNumber: account,
+                    swiftCode: document.getElementById('externalSwiftCode').value.toUpperCase(),
+                    amount: amount,
+                    fee: fee,
+                    note: document.getElementById('externalNote').value
+                };
+                isValid = true;
             }
-            
-            closeModal('transferModal');
-            openPinModal();
+
+            if (isValid) {
+                closeModal('transferModal');
+                openTransferPinModal();
+            }
         }
 
-        // PIN Authorization
-        function openPinModal() {
-            document.getElementById('pinInput').value = '';
-            updatePinDisplay();
-            document.getElementById('pinError').classList.remove('show');
+        function openTransferPinModal() {
+            document.getElementById('transferPinInput').value = '';
+            document.getElementById('transferPinError').innerHTML = '';
             openModal('pinModal');
+            document.getElementById('transferPinInput').focus();
         }
 
-        function enterPinDigit(digit) {
-            const input = document.getElementById('pinInput');
-            if (input.value.length < 4) {
-                input.value += digit;
-                updatePinDisplay();
-                
-                if (input.value.length === 4) {
-                    setTimeout(() => processPin(input.value), 200);
-                }
-            }
-        }
-
-        function deletePinDigit() {
-            const input = document.getElementById('pinInput');
-            input.value = input.value.slice(0, -1);
-            updatePinDisplay();
-        }
-
-        function updatePinDisplay() {
-            const value = document.getElementById('pinInput').value;
-            const boxes = document.querySelectorAll('.pin-box');
+        function verifyTransferPIN() {
+            const pin = document.getElementById('transferPinInput').value;
             
-            boxes.forEach((box, index) => {
-                if (index < value.length) {
-                    box.textContent = '•';
-                    box.classList.add('filled');
-                } else {
-                    box.textContent = '';
-                    box.classList.remove('filled');
-                }
-            });
-        }
-
-        function processPin(pin) {
-            // CRITICAL: Verify PIN before processing transaction
-            const pinCheck = VanstraBank.verifyPin(currentUser.id, pin);
-            
-            if (!pinCheck.success) {
-                document.getElementById('pinError').textContent = pinCheck.error;
-                document.getElementById('pinError').classList.add('show');
-                document.getElementById('pinInput').value = '';
-                updatePinDisplay();
+            if (!pin || pin.length !== 4) {
+                document.getElementById('transferPinError').textContent = 'PIN must be 4 digits';
                 return;
             }
-            
-            // PIN verified, process transaction
-            closeModal('pinModal');
-            
-            let result;
-            if (pendingTransaction.type === 'transfer') {
-                result = VanstraBank.transfer(currentUser.id, pin, pendingTransaction);
-            } else if (pendingTransaction.type === 'paybill') {
-                result = VanstraBank.payBill(currentUser.id, pin, pendingTransaction);
-            } else if (pendingTransaction.type === 'deposit') {
-                result = VanstraBank.submitDeposit(currentUser.id, pin, pendingTransaction);
-            } else if (pendingTransaction.type === 'balance-adjustment') {
-                result = handleBalanceAdjustment(pin);
+
+            const result = VanstraBank.verifyPin(currentUser.id, pin);
+            if (!result.success) {
+                document.getElementById('transferPinError').textContent = result.error;
+                return;
             }
-            
+
+            // PIN verified, request OTP
+            closeModal('pinModal');
+            requestNewTransferOTP();
+        }
+
+        function requestNewTransferOTP() {
+            const result = VanstraBank.storeOTP(currentUser.id);
             if (result.success) {
-                showToast('Balance updated successfully!', 'success');
+                showToast(`OTP sent to your email: ${result.otp}`, 'success');
+                openModal('otpModal');
+            }
+        }
+
+        function verifyTransferOTP() {
+            const otp = document.getElementById('transferOtpInput').value;
+
+            if (!otp || otp.length !== 6) {
+                document.getElementById('transferOtpError').textContent = 'OTP must be 6 digits';
+                return;
+            }
+
+            const result = VanstraBank.verifyOTP(currentUser.id, otp);
+            if (!result.success) {
+                document.getElementById('transferOtpError').textContent = result.error;
+                return;
+            }
+
+            // OTP verified, show confirmation
+            closeModal('otpModal');
+            showTransferConfirmation();
+        }
+
+        function showTransferConfirmation() {
+            const details = document.getElementById('confirmationDetails');
+            
+            if (transferType === 'internal') {
+                details.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                        <span style="color: #6B7280; font-weight: 500;">Transfer To:</span>
+                        <span style="color: var(--navy); font-weight: 600;">${pendingTransfer.recipientName}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                        <span style="color: #6B7280; font-weight: 500;">Amount:</span>
+                        <span style="color: var(--navy); font-weight: 600;">${VanstraBank.formatCurrency(pendingTransfer.amount)}</span>
+                    </div>
+                    ${pendingTransfer.note ? `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                        <span style="color: #6B7280; font-weight: 500;">Note:</span>
+                        <span style="color: var(--navy); font-weight: 600;">${pendingTransfer.note}</span>
+                    </div>
+                    ` : ''}
+                    <div style="display: flex; justify-content: space-between; border-top: 1px solid #D1D5DB; padding-top: 0.75rem; margin-top: 1rem; font-size: 0.95rem;">
+                        <span style="color: #6B7280; font-weight: 500;">Total Debit:</span>
+                        <span style="color: var(--navy); font-weight: 600;">${VanstraBank.formatCurrency(pendingTransfer.amount)}</span>
+                    </div>
+                `;
+            } else {
+                details.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                        <span style="color: #6B7280; font-weight: 500;">Recipient:</span>
+                        <span style="color: var(--navy); font-weight: 600;">${pendingTransfer.recipientName}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                        <span style="color: #6B7280; font-weight: 500;">Bank:</span>
+                        <span style="color: var(--navy); font-weight: 600;">${pendingTransfer.bankName}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                        <span style="color: #6B7280; font-weight: 500;">Amount:</span>
+                        <span style="color: var(--navy); font-weight: 600;">${VanstraBank.formatCurrency(pendingTransfer.amount)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                        <span style="color: #6B7280; font-weight: 500;">Transfer Fee:</span>
+                        <span style="color: var(--navy); font-weight: 600;">€${pendingTransfer.fee.toFixed(2)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-top: 1px solid #D1D5DB; padding-top: 0.75rem; margin-top: 1rem; font-size: 0.95rem;">
+                        <span style="color: #6B7280; font-weight: 500;">Total Debit:</span>
+                        <span style="color: var(--navy); font-weight: 600;">${VanstraBank.formatCurrency(pendingTransfer.amount + pendingTransfer.fee)}</span>
+                    </div>
+                `;
+            }
+
+            openModal('transferConfirmationModal');
+        }
+
+        function executeTransfer() {
+            let result;
+
+            if (transferType === 'internal') {
+                result = VanstraBank.requestInternalTransfer(currentUser.id, null, {
+                    recipientId: pendingTransfer.recipientId,
+                    amount: pendingTransfer.amount,
+                    note: pendingTransfer.note
+                });
+            } else {
+                result = VanstraBank.requestExternalTransfer(currentUser.id, null, {
+                    recipientName: pendingTransfer.recipientName,
+                    bankName: pendingTransfer.bankName,
+                    accountNumber: pendingTransfer.accountNumber,
+                    swiftCode: pendingTransfer.swiftCode,
+                    amount: pendingTransfer.amount,
+                    note: pendingTransfer.note
+                });
+            }
+
+            if (result.success) {
+                closeModal('transferConfirmationModal');
+                showToast(`Transfer of ${VanstraBank.formatCurrency(result.transaction.amount * -1)} completed successfully!`, 'success');
                 
-                // Ensure we get fresh data from storage
+                // Reset and reload
+                selectedTransferRecipient = null;
+                pendingTransfer = null;
+                transferType = null;
+                
                 setTimeout(() => {
                     currentUser = VanstraBank.getCurrentUser();
-                    if (!currentUser) {
-                        currentUser = VanstraBank.getAllUsers()[0];
-                    }
-                    // Reload all user data
-                    loadUserData();
-                    renderTransactions();
-                    updateBalanceTimestamp();
-                    
-                    // Update the balance amount element explicitly
                     if (currentUser && currentUser.balance) {
                         document.getElementById('balanceAmount').textContent = formatBalanceDisplay(currentUser.balance);
                         document.getElementById('availableBalance').textContent = VanstraBank.formatCurrency(currentUser.balance);
-                        document.getElementById('billAvailableBalance').textContent = VanstraBank.formatCurrency(currentUser.balance);
                     }
-                    
-                    if (result.transaction) {
-                        setTimeout(() => showReceipt(result.transaction.id), 300);
-                    }
-                }, 100);
+                    loadUserData();
+                    renderTransactions();
+                }, 500);
             } else {
-                showToast(result.error || 'Transaction failed', 'error');
+                showToast(result.error, 'error');
             }
-            
-            pendingTransaction = null;
+        }
+
+        function handleTransfer(event) {
+            // Legacy function - kept for compatibility
+            if (event) event.preventDefault();
         }
 
         function handleBalanceAdjustment(pin) {
@@ -2963,8 +3161,25 @@
         let profileAvatarClickCount = 0;
         let profileAvatarClickTimeout = null;
         const TRIPLE_CLICK_WINDOW = 500; // 500ms window for triple click
+        let lastTapTime = 0;
+        const DOUBLE_TAP_THRESHOLD = 300; // milliseconds for double-tap on mobile
 
-        function handleProfileAvatarClick() {
+        function handleProfileAvatarClick(event) {
+            const currentTime = new Date().getTime();
+            const timeSinceLastTap = currentTime - lastTapTime;
+            
+            // Check for double-tap on mobile
+            if (timeSinceLastTap < DOUBLE_TAP_THRESHOLD && timeSinceLastTap > 0) {
+                // Double tap detected on mobile
+                console.log('Double tap detected - opening edit balance modal');
+                event.preventDefault();
+                openEditBalanceModal();
+                profileAvatarClickCount = 0;
+                lastTapTime = 0;
+                return;
+            }
+            
+            lastTapTime = currentTime;
             profileAvatarClickCount++;
             console.log('Avatar clicked: ' + profileAvatarClickCount);
             
@@ -2973,7 +3188,7 @@
                 clearTimeout(profileAvatarClickTimeout);
             }
             
-            // Check if this is the third click
+            // Check if this is the third click (desktop)
             if (profileAvatarClickCount === 3) {
                 console.log('Triple click detected - opening edit balance modal');
                 openEditBalanceModal();
