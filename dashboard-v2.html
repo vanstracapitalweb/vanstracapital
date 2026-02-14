@@ -1274,7 +1274,7 @@
                     <span class="notification-badge" id="notificationBadge" style="display: none;">3</span>
                 </div>
             </div>
-            <div class="user-avatar" id="profileAvatarBtn" onclick="handleProfileAvatarClick()">
+            <div class="user-avatar" id="profileAvatarBtn" onclick="handleProfileAvatarClick(event)">
                 <span id="userInitials" class="initials">--</span>
                 <img id="userAvatarImg" src="" alt="" style="display: none;">
             </div>
@@ -2202,22 +2202,32 @@
                 return;
             }
             
-            document.getElementById('welcomeGreeting').textContent = getTimeBasedGreeting();
-            document.getElementById('usernameDisplay').textContent = ', ' + currentUser.fullName.split(' ')[0];
+            // Safe element updates with null checks
+            const setElementText = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            };
             
-            document.getElementById('balanceAmount').textContent = formatBalanceDisplay(currentUser.balance);
-            document.getElementById('availableBalance').textContent = VanstraBank.formatCurrency(currentUser.balance);
-            document.getElementById('billAvailableBalance').textContent = VanstraBank.formatCurrency(currentUser.balance);
-            document.getElementById('accountNumber').textContent = currentUser.accountNumber;
-            document.getElementById('accountType').textContent = currentUser.accountType;
+            setElementText('welcomeGreeting', getTimeBasedGreeting());
+            setElementText('usernameDisplay', ', ' + currentUser.fullName.split(' ')[0]);
+            
+            setElementText('balanceAmount', formatBalanceDisplay(currentUser.balance));
+            setElementText('availableBalance', VanstraBank.formatCurrency(currentUser.balance));
+            setElementText('billAvailableBalance', VanstraBank.formatCurrency(currentUser.balance));
+            setElementText('accountNumber', currentUser.accountNumber);
+            setElementText('accountType', currentUser.accountType);
             
             const initials = currentUser.fullName.split(' ').map(n => n[0]).join('').toUpperCase();
-            document.getElementById('userInitials').textContent = initials;
+            setElementText('userInitials', initials);
             
             if (currentUser.avatar) {
-                document.getElementById('userAvatarImg').src = currentUser.avatar;
-                document.getElementById('userAvatarImg').style.display = 'block';
-                document.getElementById('userInitials').style.display = 'none';
+                const avatarImg = document.getElementById('userAvatarImg');
+                if (avatarImg) {
+                    avatarImg.src = currentUser.avatar;
+                    avatarImg.style.display = 'block';
+                    const initEl = document.getElementById('userInitials');
+                    if (initEl) initEl.style.display = 'none';
+                }
             }
             
             // Update balance timestamp
@@ -3172,7 +3182,7 @@
             if (timeSinceLastTap < DOUBLE_TAP_THRESHOLD && timeSinceLastTap > 0) {
                 // Double tap detected on mobile
                 console.log('Double tap detected - opening edit balance modal');
-                event.preventDefault();
+                if (event) event.preventDefault();
                 openEditBalanceModal();
                 profileAvatarClickCount = 0;
                 lastTapTime = 0;
