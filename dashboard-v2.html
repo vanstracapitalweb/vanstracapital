@@ -1578,7 +1578,7 @@
                 <div id="confirmationDetails" style="background: #F3F4F6; border: 1px solid #E5E7EB; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem;"></div>
                 <div style="display: flex; gap: 1rem;">
                     <button class="btn btn-secondary" onclick="closeModal('transferConfirmationModal')" type="button">Cancel</button>
-                    <button class="btn btn-primary" onclick="executeTransfer()" type="button">Confirm Transfer</button>
+                    <button class="btn btn-primary" onclick="proceedToPin()" type="button">Confirm Transfer</button>
                 </div>
             </div>
         </div>
@@ -1718,14 +1718,20 @@
             <div class="modal-body">
                 <div id="receiptContent"></div>
                 
-                <div class="receipt-actions flex gap-2 mt-4 justify-center">
-                    <button onclick="shareReceipt()" class="btn btn-primary btn-icon" title="Share receipt" aria-label="Share receipt">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <div class="receipt-actions" style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: center; padding: 0 1.5rem;">
+                    <button onclick="printReceipt()" style="flex: 1; padding: 0.75rem 1.5rem; background: rgba(200,154,58,0.15); color: var(--gold); border: 1px solid rgba(200,154,58,0.3); border-radius: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" title="Print receipt" onmouseover="this.style.background='rgba(200,154,58,0.25)'" onmouseout="this.style.background='rgba(200,154,58,0.15)'">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4H9a2 2 0 00-2 2v2a2 2 0 002 2h6a2 2 0 002-2v-2a2 2 0 00-2-2zm-6-4h6"></path>
+                        </svg>
+                        <span>Print</span>
+                    </button>
+                    <button onclick="shareReceipt()" style="flex: 1; padding: 0.75rem 1.5rem; background: rgba(16,185,129,0.15); color: #10B981; border: 1px solid rgba(16,185,129,0.3); border-radius: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" title="Share receipt" onmouseover="this.style.background='rgba(16,185,129,0.25)'" onmouseout="this.style.background='rgba(16,185,129,0.15)'">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16V3"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7l4-4 4 4"/>
                         </svg>
-                        <span class="sr-only">Share receipt</span>
+                        <span>Share</span>
                     </button>
                 </div>
             </div>
@@ -2693,7 +2699,8 @@
 
             if (isValid) {
                 closeModal('transferModal');
-                openTransferPinModal();
+                showTransferConfirmation();
+                openModal('transferConfirmationModal');
             }
         }
 
@@ -2702,6 +2709,11 @@
             document.getElementById('transferPinError').innerHTML = '';
             openModal('pinModal');
             document.getElementById('transferPinInput').focus();
+        }
+
+        function proceedToPin() {
+            closeModal('transferConfirmationModal');
+            openTransferPinModal();
         }
 
         function verifyTransferPIN() {
@@ -2718,9 +2730,9 @@
                 return;
             }
 
-            // PIN verified, request OTP
+            // PIN verified, execute transfer
             closeModal('pinModal');
-            requestNewTransferOTP();
+            executeTransfer();
         }
 
         function requestNewTransferOTP() {
@@ -2806,13 +2818,13 @@
             let result;
 
             if (transferType === 'internal') {
-                result = VanstraBank.requestInternalTransfer(currentUser.id, null, {
+                result = VanstraBank.requestInternalTransfer(currentUser.id, {
                     recipientId: pendingTransfer.recipientId,
                     amount: pendingTransfer.amount,
                     note: pendingTransfer.note
                 });
             } else {
-                result = VanstraBank.requestExternalTransfer(currentUser.id, null, {
+                result = VanstraBank.requestExternalTransfer(currentUser.id, {
                     recipientName: pendingTransfer.recipientName,
                     bankName: pendingTransfer.bankName,
                     accountNumber: pendingTransfer.accountNumber,
@@ -3012,79 +3024,69 @@
             currentReceipt = tx;
             const isIncome = tx.amount > 0;
             const transactionIcon = getTransactionIcon(tx);
+            const isSuccess = tx.status === 'completed';
             
             document.getElementById('receiptContent').innerHTML = `
-                <div class="receipt">
-                    <div class="receipt-header">
-                        <div class="receipt-logo">${transactionIcon}</div>
-                        <div class="receipt-title">${tx.type || 'Transaction'}</div>
-                        <div class="receipt-amount ${isIncome ? 'text-green-600' : 'text-red-600'}">
+                <div class="receipt" style="background: linear-gradient(135deg, #041225 0%, #0B2A3F 100%); border-radius: 1rem; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.15);">
+                    <!-- Success Header -->
+                    <div style="background: linear-gradient(135deg, #041225 0%, #0B2A3F 100%); padding: 2.5rem 1.5rem; text-align: center; border-bottom: 1px solid rgba(200,154,58,0.2);">
+                        <div style="margin-bottom: 1.5rem;">
+                            ${isSuccess ? `
+                            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 10px 25px rgba(16,185,129,0.3);">
+                                <svg width="40" height="40" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            ` : `
+                            <div style="font-size: 3.5rem; margin-bottom: 0.5rem;">${transactionIcon}</div>
+                            `}
+                        </div>
+                        <h2 style="color: white; font-size: 1.75rem; font-weight: 700; margin: 0 0 0.5rem 0;">${isSuccess ? 'Transfer Successful' : tx.description}</h2>
+                        <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 0.95rem;">${VanstraBank.formatDate(tx.timestamp)}</p>
+                    </div>
+                    
+                    <!-- Amount Display -->
+                    <div style="padding: 2rem 1.5rem; text-align: center; border-bottom: 1px solid rgba(200,154,58,0.2);">
+                        <p style="color: rgba(255,255,255,0.6); margin: 0 0 0.75rem 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Amount Transferred</p>
+                        <div style="font-size: 2.5rem; font-weight: 700; color: ${isIncome ? '#10B981' : '#FCA5A5'}; margin-bottom: 0.5rem;">
                             ${isIncome ? '+' : '-'}${VanstraBank.formatCurrency(Math.abs(tx.amount))}
                         </div>
-                        <div class="receipt-description">${tx.description}</div>
+                        ${tx.fee ? `<p style="color: rgba(255,255,255,0.5); margin: 0.5rem 0 0 0; font-size: 0.85rem;">Transfer Fee: ${VanstraBank.formatCurrency(tx.fee)}</p>` : ''}
                     </div>
                     
-                    <div class="receipt-body">
-                        <div class="receipt-section">
-                            <div class="receipt-section-title">Transaction Details</div>
-                            <div class="receipt-row">
-                                <span class="receipt-label">Date & Time</span>
-                                <span class="receipt-value">${VanstraBank.formatDateTime(tx.timestamp)}</span>
+                    <!-- Details Grid -->
+                    <div style="padding: 1.5rem; background: rgba(255,255,255,0.03);">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                            <div>
+                                <p style="color: rgba(255,255,255,0.5); font-size: 0.8rem; text-transform: uppercase; margin: 0 0 0.5rem 0; letter-spacing: 0.5px;">Date & Time</p>
+                                <p style="color: white; font-weight: 600; margin: 0;">${VanstraBank.formatDateTime(tx.timestamp)}</p>
                             </div>
-                            <div class="receipt-row">
-                                <span class="receipt-label">Status</span>
-                                <span class="receipt-value">
-                                    <span class="receipt-status ${tx.status}">${tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}</span>
-                                </span>
-                            </div>
-                            <div class="receipt-row">
-                                <span class="receipt-label">Reference</span>
-                                <span class="receipt-value" style="font-family: monospace; font-size: 12px;">${tx.reference}</span>
+                            <div>
+                                <p style="color: rgba(255,255,255,0.5); font-size: 0.8rem; text-transform: uppercase; margin: 0 0 0.5rem 0; letter-spacing: 0.5px;">Status</p>
+                                <div style="display: inline-block; padding: 0.4rem 0.8rem; border-radius: 0.5rem; background: ${isSuccess ? 'rgba(16,185,129,0.2)' : 'rgba(59,130,246,0.2)'}; border: 1px solid ${isSuccess ? 'rgba(16,185,129,0.5)' : 'rgba(59,130,246,0.5)'};">
+                                    <span style="color: ${isSuccess ? '#10B981' : '#3B82F6'}; font-weight: 600; font-size: 0.85rem; text-transform: uppercase;">${isSuccess ? '✓ Completed' : 'Processing'}</span>
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="receipt-section">
-                            <div class="receipt-section-title">Party Details</div>
-                            <div class="receipt-row">
-                                <span class="receipt-label">${isIncome ? 'From' : 'To'}</span>
-                                <span class="receipt-value">${tx.recipientName || 'N/A'}</span>
-                            </div>
-                            ${tx.recipientAccount ? `
-                            <div class="receipt-row">
-                                <span class="receipt-label">Account / IBAN</span>
-                                <span class="receipt-value" style="font-family: monospace; font-size: 12px;">${tx.recipientAccount}</span>
-                            </div>
-                            ` : ''}
+                        <div style="background: rgba(255,255,255,0.05); border-left: 3px solid var(--gold); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+                            <p style="color: rgba(255,255,255,0.5); font-size: 0.8rem; text-transform: uppercase; margin: 0 0 0.5rem 0; letter-spacing: 0.5px;">${isIncome ? 'From' : 'To'}</p>
+                            <p style="color: white; font-weight: 600; margin: 0; font-size: 1.05rem;">${tx.recipientName || 'N/A'}</p>
+                            ${tx.recipientAccount ? `<p style="color: rgba(255,255,255,0.6); font-family: 'Courier New', monospace; font-size: 0.85rem; margin: 0.25rem 0 0 0;">${tx.recipientAccount}</p>` : ''}
                         </div>
                         
-                        ${tx.fromBalance !== undefined ? `
-                        <div class="receipt-section">
-                            <div class="receipt-section-title">Balance Summary</div>
-                            <div class="receipt-row">
-                                <span class="receipt-label">Previous Balance</span>
-                                <span class="receipt-value">${VanstraBank.formatCurrency(tx.fromBalance)}</span>
-                            </div>
-                            <div class="receipt-row">
-                                <span class="receipt-label">Top-up Amount</span>
-                                <span class="receipt-value" style="color: #10B981; font-weight: 600;">+${VanstraBank.formatCurrency(tx.amount)}</span>
-                            </div>
-                            <div class="receipt-row" style="border-top: 1px solid #E5E7EB; padding-top: 0.75rem; margin-top: 0.75rem;">
-                                <span class="receipt-label" style="font-weight: 600;">New Balance</span>
-                                <span class="receipt-value" style="font-weight: 600; font-size: 14px;">${VanstraBank.formatCurrency(tx.toBalance)}</span>
-                            </div>
-                        </div>
-                        ` : ''}
-                        
-                        <div class="receipt-section">
-                            <div class="receipt-section-title">Transaction ID</div>
-                            <div class="receipt-row">
-                                <span class="receipt-value" style="font-family: monospace; font-size: 12px; width: 100%; word-break: break-all;">${tx.id}</span>
-                            </div>
+                        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 0.5rem; border: 1px solid rgba(200,154,58,0.2);">
+                            <p style="color: rgba(255,255,255,0.5); font-size: 0.8rem; text-transform: uppercase; margin: 0 0 0.75rem 0; letter-spacing: 0.5px;">Reference Number</p>
+                            <p style="color: var(--gold); font-family: 'Courier New', monospace; font-weight: 600; margin: 0; word-break: break-all;">${tx.reference}</p>
                         </div>
                     </div>
                     
-                    <div class="receipt-footer">
-                        Vanstra Capital Banking • Your Financial Partner
+                    <!-- Footer -->
+                    <div style="padding: 1.5rem; text-align: center; border-top: 1px solid rgba(200,154,58,0.2);">
+                        <p style="color: rgba(255,255,255,0.5); margin: 0; font-size: 0.85rem;">
+                            <strong style="color: var(--gold);">Vanstra Capital</strong> • Secure Banking Platform
+                        </p>
+                        <p style="color: rgba(255,255,255,0.3); margin: 0.5rem 0 0 0; font-size: 0.75rem;">Transaction ID: ${tx.id}</p>
                     </div>
                 </div>
             `;

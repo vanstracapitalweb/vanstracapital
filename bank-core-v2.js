@@ -430,6 +430,100 @@ const VanstraBank = (function() {
         return { success: true, transaction, newBalance: user.balance };
     }
 
+    // Internal transfer (PIN already verified in dashboard)
+    function requestInternalTransfer(userId, transferData) {
+        const users = JSON.parse(localStorage.getItem('vanstraUsers'));
+        const sender = users[userId];
+        const recipient = users[transferData.recipientId];
+
+        if (!recipient) {
+            return { success: false, error: 'Recipient not found' };
+        }
+
+        if (transferData.amount > sender.balance) {
+            return { success: false, error: 'Insufficient funds' };
+        }
+
+        // Deduct from sender
+        sender.balance -= transferData.amount;
+        
+        // Add to recipient
+        recipient.balance += transferData.amount;
+
+        const transaction = {
+            id: generateTransactionId(),
+            type: 'transfer',
+            subtype: 'internal',
+            description: 'Internal Transfer',
+            amount: -transferData.amount,
+            currency: 'EUR',
+            recipientName: recipient.fullName,
+            recipientAccount: recipient.accountNumber,
+            note: transferData.note || '',
+            status: 'completed',
+            timestamp: new Date().toISOString(),
+            reference: 'REF-' + Math.random().toString(36).substr(2, 8).toUpperCase()
+        };
+
+        sender.transactions.unshift(transaction);
+        recipient.transactions.unshift({
+            ...transaction,
+            amount: transferData.amount,
+            description: 'Internal Transfer Received from ' + sender.fullName,
+            senderName: sender.fullName,
+            senderAccount: sender.accountNumber
+        });
+
+        users[userId] = sender;
+        users[transferData.recipientId] = recipient;
+        localStorage.setItem('vanstraUsers', JSON.stringify(users));
+
+        emit('transaction', { userId, transaction, newBalance: sender.balance });
+
+        return { success: true, transaction, newBalance: sender.balance };
+    }
+
+    // External transfer (PIN already verified in dashboard)
+    function requestExternalTransfer(userId, transferData) {
+        const users = JSON.parse(localStorage.getItem('vanstraUsers'));
+        const user = users[userId];
+
+        // Calculate fee (2% minimum €2)
+        const fee = Math.max(2, transferData.amount * 0.02);
+        const totalDebit = transferData.amount + fee;
+
+        if (totalDebit > user.balance) {
+            return { success: false, error: 'Insufficient funds (including transfer fee)' };
+        }
+
+        user.balance -= totalDebit;
+
+        const transaction = {
+            id: generateTransactionId(),
+            type: 'transfer',
+            subtype: 'external',
+            description: 'External Transfer',
+            amount: -transferData.amount,
+            currency: 'EUR',
+            recipientName: transferData.recipientName,
+            recipientAccount: transferData.accountNumber,
+            recipientBank: transferData.bankName,
+            fee: fee,
+            note: transferData.note || '',
+            status: 'completed',
+            timestamp: new Date().toISOString(),
+            reference: 'REF-' + Math.random().toString(36).substr(2, 8).toUpperCase()
+        };
+
+        user.transactions.unshift(transaction);
+        users[userId] = user;
+        localStorage.setItem('vanstraUsers', JSON.stringify(users));
+
+        emit('transaction', { userId, transaction, newBalance: user.balance });
+
+        return { success: true, transaction, newBalance: user.balance };
+    }
+
     function submitDeposit(userId, pin, depositData) {
         // CRITICAL: Verify PIN first
         const pinCheck = verifyPin(userId, pin);
@@ -891,6 +985,8 @@ const VanstraBank = (function() {
         transfer,
         payBill,
         submitDeposit,
+        requestInternalTransfer,
+        requestExternalTransfer,
         
         // Chat (removed)
         // Email (simulated)
