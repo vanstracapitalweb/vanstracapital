@@ -558,6 +558,24 @@ const VanstraBank = (function() {
         return JSON.parse(localStorage.getItem('adminEvents') || '[]');
     }
 
+    function getAvailableUsers(excludeUserId) {
+        const usersData = localStorage.getItem('vanstraUsers');
+        if (!usersData) return [];
+        const users = JSON.parse(usersData);
+        if (!users || Object.keys(users).length === 0) return [];
+
+        // Return all users except the excluded one, with sanitized data for display
+        return Object.values(users)
+            .filter(u => u.id !== excludeUserId && u.status === 'active')
+            .map(u => ({
+                id: u.id,
+                fullName: u.fullName,
+                accountNumber: u.accountNumber,
+                balance: u.balance,
+                email: u.email
+            }));
+    }
+
     // adminReply removed along with internal chat support.
 
     // ==================== UTILITIES ====================
@@ -881,6 +899,7 @@ const VanstraBank = (function() {
         // Admin
         getAllUsers,
         getAdminEvents,
+        getAvailableUsers,
         
         // Events
         on,
